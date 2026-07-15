@@ -122,9 +122,9 @@ export default function Dashboard() {
 
               <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap'}}>
                 {phase.link && (
-                  <Link to={phase.link} className="btn btn-primary">
+                  <a href="/terminus-onboarding/playbook" className="btn btn-primary">
                     Read The Master Guide
-                  </Link>
+                  </a>
                 )}
                 
                 {phase.externalLink && (
@@ -166,10 +166,10 @@ export default function Dashboard() {
         </p>
         
         <div style={{display: 'flex', justifyContent: 'center', gap: '1rem', margin: '2rem 0'}}>
-          <Link to="/playbook" className="btn btn-secondary" style={{borderColor: 'var(--accent)', color: 'var(--text-main)'}}>
+          <a href="/terminus-onboarding/playbook" className="btn btn-secondary" style={{borderColor: 'var(--accent)', color: 'var(--text-main)'}}>
             <ClipboardList size={20} color="var(--accent)" />
             View Pre-Flight Checklist
-          </Link>
+          </a>
         </div>
 
         <p><strong>Once completed, drop a message in the channel for your first assignment!</strong></p>

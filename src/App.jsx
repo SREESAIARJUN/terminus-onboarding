@@ -1,6 +1,5 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
-import Playbook from './pages/Playbook'
 import { Rocket } from 'lucide-react'
 
 function App() {
@@ -15,14 +14,13 @@ function App() {
         </div>
         <div className="nav-links">
           <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Onboarding</Link>
-          <Link to="/playbook" className={`nav-link ${location.pathname === '/playbook' ? 'active' : ''}`}>Playbook</Link>
+          <a href="/terminus-onboarding/playbook" className="nav-link">Playbook</a>
         </div>
       </nav>
 
       <main className="fade-in-up">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/playbook" element={<Playbook />} />
         </Routes>
       </main>
     </div>
