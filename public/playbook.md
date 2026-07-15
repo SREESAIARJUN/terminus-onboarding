@@ -1,80 +1,199 @@
-# Project Terminus — The Master Guide
-
-Welcome to the **Project Terminus** technical playbook. This guide is your definitive source for understanding how to build, test, and submit tasks for the Terminus platform.
+# Snorkel Terminal-Bench (Harbor) — Project Terminus Comprehensive Technical Manual
+**Version 3.0 (May 2026)**
+*Audience: Benchmark, QA, Reviewers, Harbor & Infra Engineers, and Expert Contributors*
+*Developed in collaboration with Stanford University & Laude Institute Researchers*
 
 ---
 
-## 1. Executive Summary & Core Philosophy
+## 1. Executive Summary & Benchmark Philosophy
 
-**Project Terminus** is an autonomy-first agent benchmarking platform. We evaluate how well frontier AI coding agents (like Claude Code and OpenHands) solve practical, real-world software engineering problems in isolated environments.
+**Project Terminus** is an autonomy-first agent benchmarking platform designed to evaluate and benchmark the practical, real-world software engineering capabilities of frontier AI coding agents (such as Aider, Claude Code, and OpenHands) in isolated, containerised environments. 
 
-We don't test syntax memorization or toy puzzles. We test complex debugging, dependency management, and multi-step system administration.
+Unlike traditional evaluation platforms that focus on syntax memorisation, toy algorithm puzzles, or trivia, Terminus tests practical, long-horizon engineering workflows including:
+* Complex codebase debugging
+* System interaction and environment reasoning
+* Dependency management and dependency conflict resolution
+* Infrastructure troubleshooting
+* Database schema migrations and query optimization
+* Stateful, multi-step system administration tasks
 
 ### The Golden Rules of Task Creation
-1. **Human Solvability vs. AI Challenge:** Tasks must be confidently solvable by an expert human engineer but cause frontier AI agents to struggle. We are not building impossible traps; we are exposing genuine reasoning limitations.
-2. **Difficulty Calibration:** Tasks must be either **Medium** (20–60% AI pass rate) or **Hard** (≤20% pass rate). Tasks where agents achieve >60% are rejected.
-3. **Python Rule:** Any task using Python as its primary language **must** be calibrated to Hard difficulty.
-4. **Milestone Preference:** Multi-step workflows (milestone tasks) are highly preferred over single-step tasks.
-5. **Absolute Reproducibility:** Every environment must be containerized, securely pinned, and fully offline-capable.
+1. **Human Solvability vs. AI Challenge (The Core Philosophy):** A valid task must be solvable confidently by an expert human engineer but cause frontier AI agents (e.g., GPT-5.5, Claude Opus 4.8) to struggle meaningfully. The objective is not to create impossible AI traps, but to build realistic engineering environments that expose the genuine reasoning limitations of modern models.
+2. **Strict Difficulty Targets:** Tasks must be calibrated to either **Medium** (20–60% agent pass rate) or **Hard** (≤20% agent pass rate) difficulty. "Easy" tasks (which achieve a >60% pass rate against real frontier agents) are automatically blocked and rejected. Tasks where agents achieve a >80% pass rate are ineligible for payment.
+3. **Language-Specific Difficulties:** If your task uses **Python** as its primary language, it **must** be calibrated to **Hard** difficulty (≤20% pass rate).
+4. **Milestone Preference:** Multi-step (milestone-structured) tasks are highly preferred, as they provide a better assessment of long-horizon execution and pay a higher financial reward to contributors.
+5. **Environment Reproducibility:** Every execution environment must be fully reproducible, digest-pinned, and completely offline-capable.
 
 ---
 
-## 2. Platform Architecture & Isolation
+## 2. Platform Runtime Architecture & Container Isolation
 
-Terminus uses the **Harbor** orchestration framework to spawn and monitor secure Docker sandboxes.
+### 2.1 The Harbor Orchestration Framework
+**Harbor** is the core runtime execution, evaluation, and orchestration engine of the Terminus platform. It performs several critical functions in the ecosystem:
+* **Container Lifecycle Management:** Spawns, monitors, and tears down Docker sandboxes.
+* **Execution & Telemetry:** Executes the AI coding agents, runs the verifiers, and captures terminal transcripts.
+* **Replay & Captures:** Records agent actions via `tmux` and `asciinema` to generate precise, textual logs for debugging and review.
+* **AI Model Registry:** Serves as a secure registry to store, version, and share machine learning models across multi-cloud environments, ensuring reproducible benchmarks across diverse setups.
 
-### The Sandbox Lifecycle
-1. **Build Phase:** Harbor builds the environment strictly from your `Dockerfile`. All dependencies must be pre-installed. Runtime downloads are blocked.
-2. **Launch Phase:** The container boots with bounded CPU/Memory limits, zero host filesystem mounts, and no internet access (`allow_internet = false`).
-3. **Agent Runtime:** The AI agent initializes inside the container with terminal access. The agent *never* sees the verifier tests or the oracle solution.
-4. **Verifier Runtime:** After the agent finishes, Harbor runs your validation tests to grade the workspace.
-5. **Scoring:** Harbor reads the test output to determine if the agent succeeded or failed.
+### 2.2 Container Lifecycle & Sandbox Isolation
+Terminus operates on an **autonomy-first, isolated sandbox architecture**:
+1. **Environment Build Phase:** Harbor builds the environment from the task's Dockerfile. All dependencies must be pre-installed inside the image; runtime package downloads are strictly blocked.
+2. **Container Launch Phase:** Sandboxes are launched as lightweight microVMs or Docker containers with strict resource and isolation guardrails:
+   * Bounded CPU allocations, memory limits, and storage bounds.
+   * Non-privileged execution (prohibits privileged mode and host filesystem mounts).
+   * Strict offline execution (`allow_internet = false`).
+3. **Agent Runtime Phase:** The AI agent is initialized inside the container (e.g., via `devcontainer exec`) and granted terminal access, a workspace-scoped directory, and file manipulation capabilities. The agent does **not** have access to the oracle solution, hidden verifier tests, or reviewer assets.
+4. **Verifier Runtime Phase:** Harbor runs the validation tests on the modified workspace to assess correctness.
+5. **Reward Evaluation Phase:** Harbor parses the verifier's score and generates a binary success/failure token.
 
 ---
 
-## 3. Directory Structures
+## 3. Directory Structures & Sample Tasks
 
-You will primarily build **Milestone Tasks** (multi-step sequential workflows). 
+When creating a Terminus task, contributors must choose from one of three task skeletons: **Regular Task Skeleton** (non-UI and single-step tasks), **UI Task Skeleton** (user interface building tasks), or the **Milestone Task Skeleton** (multi-step workflow challenges).
 
-### The Milestone Skeleton
-A milestone task groups instructions, tests, and solutions sequentially.
-
-\`\`\`text
+### 3.1 Regular Task Skeleton
+For single-step tasks, the folder structure is flat and organized as follows:
+```text
 my-task-name/
-├── task.toml              # High-level configurations
+├── instruction.md         # The customer request or engineering ticket
+├── task.toml              # Task metadata, resources, and scoring config
 ├── environment/
-│   └── Dockerfile         # Base Docker image shared across all steps
+│   └── Dockerfile         # Docker recipe for the isolated environment
+├── solution/
+│   └── solve.sh           # Script that programmatically solves the task
+└── tests/
+    ├── test.sh            # The test runner script (calls pytest)
+    └── test_outputs.py    # Pytest code asserting behavioral correctness
+```
+
+### 3.2 Milestone Task Skeleton (Preferred)
+Milestone tasks have **no** root `instruction.md`, `tests/`, or `solution/` folders. Instead, all task elements are nested sequentially under distinct steps:
+```text
+my-task-name/
+├── task.toml              # High-level configurations and milestone count
+├── environment/
+│   └── Dockerfile         # Base Docker image shared across all milestones
 └── steps/
     ├── milestone_1/
-    │   ├── instruction.md # What the agent needs to do for Step 1
+    │   ├── instruction.md # Instructions for Milestone 1
     │   ├── solution/
-    │   │   └── solve1.sh  # Your reference script to solve Step 1
+    │   │   └── solve1.sh  # Script to solve Milestone 1
     │   └── tests/
-    │       ├── test.sh    # Test runner for Step 1
-    │       └── test_m1.py # Pytest verifier for Step 1
+    │       ├── test.sh    # Test runner for Milestone 1
+    │       └── test_m1.py # Pytest verification for Milestone 1
     └── milestone_2/
-        ├── instruction.md 
+        ├── instruction.md # Instructions for Milestone 2
         ├── solution/
-        │   └── solve2.sh  
+        │   └── solve2.sh  # Script to solve Milestone 2
         └── tests/
-            ├── test.sh    
-            └── test_m2.py 
-\`\`\`
+            ├── test.sh    # Test runner for Milestone 2
+            └── test_m2.py # Pytest verification for Milestone 2
+```
+
+### 3.3 Sample Directory Trees & File Lists (from `SampleTasks.md`)
+The platform includes concrete structural examples of these files across three standard sample tasks:
+
+#### Sample Task 1: Basic Structure
+* `Task Creation Sample 1/.gitignore`
+* `Task Creation Sample 1/README.md`
+* `Task Creation Sample 1/instruction.md`
+* `Task Creation Sample 1/task.toml`
+* `Task Creation Sample 1/environment.dockerignore`
+* `Task Creation Sample 1/environment/Dockerfile`
+* `Task Creation Sample 1/solution/solve.sh`
+* `Task Creation Sample 1/tests/test.sh`
+* `Task Creation Sample 1/tests/test_outputs.py`
+
+#### Sample Task 2: Advanced Datalog Implementation (`stratdl`)
+This task evaluates Datalog rule stratifiability and query resolution:
+* `Task creation sample 2/.../.DS_Store`
+* `Task creation sample 2/.../instruction.md`
+* `Task creation sample 2/.../task.toml`
+* `Task creation sample 2/.../environment.DS_Store`
+* `Task creation sample 2/.../environment.dockerignore`
+* `Task creation sample 2/.../environment/Dockerfile`
+* `Task creation sample 2/.../environment/app/datalog.md` (Explaining datalog syntax and error formats)
+* `Task creation sample 2/.../environment/app/stratdl` (Executable engine)
+* `Task creation sample 2/.../environment/app/examples/` (`reach.dl`, `recall.dl`, `strata.dl`, `tc.dl`)
+* `Task creation sample 2/.../environment/app/src/stratdl.pl`
+* `Task creation sample 2/.../solution/oracle.pl`
+* `Task creation sample 2/.../solution/solve.sh`
+* `Task creation sample 2/.../tests/ref_stratdl.py`
+* `Task creation sample 2/.../tests/test.sh`
+* `Task creation sample 2/.../tests/test_outputs.py`
+
+#### Sample Task 3: Node.js Suppressions CLI
+An exhaustive JS application for suppression management:
+* `Task Creation Sample 3/.../instruction.md`
+* `Task Creation Sample 3/.../task.toml`
+* `Task Creation Sample 3/.../environment.dockerignore`
+* `Task Creation Sample 3/.../environment/Dockerfile`
+* `Task Creation Sample 3/.../environment/package.json`
+* `Task Creation Sample 3/.../environment/bin/suppression-cli.js`
+* `Task Creation Sample 3/.../environment/config/` (`defaults.json`, `lists.json`)
+* `Task Creation Sample 3/.../environment/data/sample-events.jsonl`
+* `Task Creation Sample 3/.../environment/docs/` (`event-types.md`, `operational-notes.md`, `suppression-contract.md`, `warnings.md`)
+* `Task Creation Sample 3/.../environment/fixtures/README.md`
+* `Task Creation Sample 3/.../environment/fixtures/basic.jsonl`
+* `Task Creation Sample 3/.../environment/scripts/smoke-check.js`
+* `Task Creation Sample 3/.../environment/src/` (`cliArgs.js`, `collections.js`, `constants.js`, `email.js`, `errors.js`, `evaluate.js`, `files.js`, `index.js`, `logger.js`, `normalize.js`, `path-utils.js`, `report.js`, `schema.js`, `serializers.js`, `state.js`, `time.js`, `validate.js`)
+* `Task Creation Sample 3/.../solution/solve.sh`
+* `Task Creation Sample 3/.../solution/fixed/src/` (`evaluate.js`, `files.js`, `normalize.js`, `state.js`, `time.js`)
+* `Task Creation Sample 3/.../tests/test.sh`
+* `Task Creation Sample 3/.../tests/test_outputs.py`
 
 ---
 
-## 4. Configuration (task.toml)
+## 4. Configuration Engineering Specification (`task.toml`)
 
-The `task.toml` file controls runtime constraints and scoring.
+The configuration file `task.toml` provides the authoritative settings read by Harbor to control the runtime constraints, scoring algorithms, and environment settings of the task.
 
-### Standard Template
-\`\`\`toml
+### 4.1 Schema Fields (Required vs. Optional)
+
+| Field Name | Type | Required | Purpose / Definition |
+| :--- | :--- | :--- | :--- |
+| `version` | String / Int | **Yes** | Version of the task specification format. |
+| `metadata.difficulty` | String | **Yes** | Calibrated difficulty. Values: `"easy"`, `"medium"`, `"hard"`, or `"unknown"`. |
+| `metadata.category` | String | **Yes** | Taxonomic category of the engineering task. |
+| `metadata.subcategories` | List[String]| No | Optional fine-grained tags for additional filtering. |
+| `metadata.tags` | List[String]| No | Optional search terms and keyword metadata. |
+| `metadata.languages` | List[String]| No | List of programming languages declared in the challenge. |
+| `agent.timeout_sec` | Integer | **Yes** | Hard maximum duration for agent execution (e.g., `600` seconds). |
+| `verifier.timeout_sec` | Integer | **Yes** | Hard maximum duration for verifier tests execution. |
+| `environment.allow_internet` | Boolean | **Yes** | Must be set to `false` to maintain offline compliance. |
+| `environment.os` | String | **Yes** | Operating system target. **Must be a string** (e.g. `"linux"`), not a list. |
+| `environment.workdir` | String | **Yes** | Default active container directory for the agent execution (e.g., `"/app"`). |
+| `number_of_milestones` | Integer | No | Explicit count of sequential steps for milestone tasks. |
+
+### 4.2 Allowed Enumerations & Taxonomies
+* **Difficulty Values:** `easy`, `medium`, `hard`, `unknown`
+* **Category Taxonomy:**
+  * `software-engineering`
+  * `debugging`
+  * `system-administration`
+  * `machine-learning`
+  * `data-processing`
+  * `security`
+  * `scientific-computing`
+  * `build-and-dependency-management`
+  * `games`
+* **Subcategory Taxonomy:**
+  * `long_context`
+  * `tool_specific`
+  * `api_integration`
+  * `db_interaction`
+  * `ui_building`
+
+### 4.3 Default task.toml Template
+```toml
 [metadata]
 name = "my-task-name"
 difficulty = "hard"
 language = "python"
 milestone_count = 2
 category = "software-engineering"
+subcategories = ["api_integration"]
 
 [resources]
 timeout_seconds = 600
@@ -82,7 +201,7 @@ cpu_limit = 2
 memory_limit_mb = 2048
 
 [environment]
-os = "linux"
+os = "linux"                                      # WARNING: Must be a string (e.g. "linux"), NOT ["linux"]
 dockerfile = "environment/Dockerfile"
 allow_internet = false
 workdir = "/app"
@@ -90,95 +209,328 @@ workdir = "/app"
 [scoring]
 points_total = 100
 allow_partial_credit = true
-\`\`\`
+```
 
 ---
 
 ## 5. Docker Engineering Standards
 
-Strict validation gates apply to all Dockerfiles. 
+All Terminus environments are constructed via Docker to guarantee identical execution spaces across different machines. Strict validation gates apply to Dockerfile engineering:
 
-1. **Immutable Base Images:** You must pin the exact image digest (`@sha256:...`). Floating tags like `ubuntu:latest` are strictly forbidden.
-2. **Mandatory CLI Tools:** You must install `tmux` and `asciinema`. Without these, the platform cannot record the agent's terminal session.
-3. **100% Offline:** The container must not require `npm install` or `pip install` during agent execution. Bake everything into the image at build time.
-4. **No Test Leaks:** Never copy your `solution/` or `tests/` directories into the Docker image. 
+### 5.1 Mandatory Dockerfile Rules
+1. **Immutable Base Image (Digest Pinning):** Every `FROM` directive **must** specify an exact image digest using `@sha256:<digest>`. Floating tags (like `FROM python:3.11` or `FROM ubuntu:latest`) will immediately trigger a CI failure.
+2. **Sanctioned Base Registry:** Canonical registries must be used (e.g., `public.ecr.aws/docker/library/python:3.13-slim-bookworm@sha256:...`).
+3. **Mandatory Runtime Packages:** Dockerfiles **must** install `tmux` and `asciinema`. If these are omitted, parallel agent orchestration and terminal recording will fail silently, leading to zero-output runs.
+4. **Offline Capability:** The task container must build completely without requiring runtime downloads (`pip`, `apt-get`, `npm install` are forbidden during agent execution).
+5. **No File Leaks:** **Never** copy the `solution/` or `tests/` directories into the image at build time (e.g. `COPY solution/ /app/solution` is forbidden).
 
----
+### 5.2 Gold Standard Dockerfile Template
+```dockerfile
+FROM public.ecr.aws/docker/library/python:3.13-slim-bookworm@sha256:d314a42823023e98b1e846062a40b3c2bc16db97aa60cd6e4566cd3f7a1f5924
 
-## 6. Authoring Instructions (instruction.md)
+# Install essential CLI tools and agent runtime prerequisites
+RUN apt-get update && apt-get install -y --no-install-recommends     tmux     asciinema     sqlite3     git     curl     && rm -rf /var/lib/apt/lists/*
 
-Instructions should read like a real Slack message or Jira ticket from a coworker. 
+WORKDIR /app
 
-* **Focus on Outcomes:** Describe the observable problem, not how to fix it. 
-* **Use Absolute Paths:** Always say `/app/src/api.js`, never just `api.js`.
-* **No Hints:** Do not leak file names or exact line numbers if the agent should reasonably search for them.
+# Pin and install task dependencies safely
+COPY environment/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-**Bad Example:** "Open `/app/api.py` and change the regex on line 42 to fix the bug."
-**Good Example:** "The API is failing integration tests when malformed JSON is sent. Investigate the routing logic and ensure it returns an HTTP 400."
-
----
-
-## 7. The Oracle Solution (solve.sh)
-
-The Oracle is your reference answer key. It must programmatically solve the task.
-
-* It must achieve a perfect score every time it runs.
-* It must fix the issue dynamically (using `sed`, `patch`, or python scripts).
-* It cannot simply hardcode the expected outputs or mock the system.
+CMD ["/bin/bash"]
+```
 
 ---
 
-## 8. Verifiers & Testing (test.sh)
+## 6. Instruction Authoring SOP (`instruction.md`)
 
-The verifier checks if the agent actually fixed the system.
+Instructions should read like authentic communication between real engineers collaborating on Slack or Jira. Avoid over-structured, synthetic, or academic styling.
 
-1. **Behavioral Testing:** Test that the system works (e.g., the server returns a 200 OK). Do not write tests that just check if the agent used a specific function name.
-2. **The Exit Code Rule:** The `test.sh` script must write `1.0` or `0.0` to `/logs/verifier/reward.txt`. **Never put `exit 0` at the bottom of test.sh.**
+### 6.1 Core Guidelines
+* **concise and outcomes-focused:** Describe the observable problem clearly. Do not include excessive hints or hand-holding.
+* **Absolute Paths:** Always use absolute filesystem paths (e.g., `/app/data/config.json`) to refer to targets.
+* **Explicit Schema Constraints:** If outputting files, specify exact JSON/CSV structures and exact filenames.
+* **Evaluate Reasoning, Not Instruction-Following:** Say *what* needs to be achieved, **never** explain *how* to achieve it.
 
-**Standard test.sh Template:**
-\`\`\`bash
+### 6.2 Instruction Contrast
+
+* **Bad Instruction (Avoid):**
+  > "You are an expert AI agent. Open `/app/api/app.py` and modify line 42 to replace the validation function with a regex pattern. Then run `pytest tests/test_outputs.py` and restart the flask server."
+  * *Why it's bad:* It leaks the exact file, exact line, exact solution method, and reads like a tutorial instead of an engineering ticket.
+
+* **Good Instruction (Recommended):**
+  > "The Flask API validation workflow is currently failing integration tests. Investigate the runtime environment and repair the request validation system so that malformed payloads correctly return HTTP 400 responses, while valid requests continue to function normally. Do not modify the verifier logic."
+  * *Why it's good:* It specifies the problematic system behavior and the expected success state while leaving the debugging path and implementation strategy to the agent.
+
+---
+
+## 7. Oracle Solution Development (`solve.sh`)
+
+The **Oracle Solution** (`solution/solve.sh`) is the reference answer key. It programmatically fixes the environment issues to prove that the task is fully solvable by a human engineer.
+
+### 7.1 Key Oracle Guidelines
+1. **Solves the Task Reliably:** The oracle must achieve a perfect 1.0 reward on every run.
+2. **Determinism:** The execution sequence must yield the exact same environment and file outputs every time.
+3. **No Hardcoded Outputs:** The oracle must resolve the bug dynamically by applying genuine edits, rather than echoing static mock responses into the output paths.
+4. **Sequential Verification:** It should emulate the human engineering workflow (e.g., run test, see it fail, apply patch, run test, see it pass).
+5. **No random timeouts:** Avoid sleep commands or arbitrary wait cycles that introduce flakiness.
+
+---
+
+## 8. Verifier Architecture & Testing SOP
+
+The verifier executes tests to evaluate the agent's work. It must test observable system behavior, not implementation details.
+
+### 8.1 The Test Runner (`test.sh`) Contract
+The `test.sh` script is the bridge between Python testing and Harbor reward logging. It must execute the tests and write a single decimal string to `/logs/verifier/reward.txt` (`1.0` for success, `0.0` for failure).
+
+#### Crucial Gotcha: Exit Code Suppression
+**Do NOT append `exit 0` or `exit $?` at the very end of `test.sh`.** The final block must be the `if/else` wrapper writing to `/logs/verifier/reward.txt`. Adding trailing exit commands breaks the platform's test-runner validator and triggers an automatic CI rejection.
+
+#### Gold Standard `test.sh`
+```bash
 #!/bin/bash
 set -e
 cd /app
 
+# Run python pytest and redirect execution logs cleanly
 pytest tests/test_outputs.py -v --tb=short > /logs/verifier/pytest_output.log 2>&1
 
+# Parse exit code to determine the reward output
 if [ $? -eq 0 ]; then
     echo "1.0" > /logs/verifier/reward.txt
 else
     echo "0.0" > /logs/verifier/reward.txt
 fi
-\`\`\`
+# WARNING: Do NOT put `exit $?` or `exit 0` below this line!
+```
+
+### 8.2 The Pytest File (`test_outputs.py`)
+* **Behavior-Based Audits:** Test that the database contains the correct entries or that the endpoint returns the correct status code. Do **not** parse the agent's source code string to assert that specific function names were used.
+* **Docstrings:** Pytest test cases **must** have descriptive, informative docstrings explaining what is being tested. LLMaJ checks will fail if docstrings are absent.
+* **Anti-Cheating:** Implement assertions targeting potential shortcuts, hardcoded results, and fake mocks.
 
 ---
 
-## 9. Anti-Cheating
+## 9. Anti-Cheating and Exploit Prevention
 
-If an AI agent can cheat your task, the task is invalid. 
+A benchmark task is considered invalid if an agent can bypass the intended engineering work to score points.
 
-* **Spoofing:** Agents might try to write `1.0` directly to the reward file. 
-* **Hardcoding:** Agents might echo hardcoded text just to satisfy your pytest assertions.
-* **Defense:** Use random parameters in your tests, check actual database state, and ensure your verifier logic cannot be modified by the agent.
+### 9.1 Common Exploit Vectors
+* **Reward Spoofing:** Writing "1.0" directly to `/logs/verifier/reward.txt`.
+* **Test Monkeypatching:** Modifying Python tests dynamically at runtime to force test suites to return a pass.
+* **Bypassing Verifiers:** Modifying `/app/tests/test.sh` or deleting pytest validation files.
+* **Hardcoding Outputs:** Spoofing responses based on exact test assertion patterns.
+* **Filesystem and Service Manipulation:** Creating symlinks or spoofing downstream network servers.
+
+### 9.2 Enforcement & Defense Mechanisms
+1. **Verifier Asset Isolation:** Keep the test validation suite and test runner hidden or read-only inside the sandbox runtime.
+2. **Hidden Tests:** Evaluate the agent's work against an isolated, secondary test suite that is completely inaccessible during execution.
+3. **Dynamic Validation payloads:** Use random parameters, varying payload entries, and changing system inputs to prevent hardcoded outputs.
+4. **State Checks:** Ensure actual state change occurs (e.g. check database tables, assert filesystem state) rather than just looking at terminal outputs.
 
 ---
 
-## 10. Local Debugging & Submission
+## 10. Stateful, Milestone, and Long-Context Tasks
 
-Always test locally before submitting.
+### 10.1 Milestone Sequential Logic
+* **State Persistence:** Task steps execute sequentially on a shared filesystem.
+* **The No-Leak Rule:** Milestone 2 must be engineered so that it cannot pass if Milestone 1 fails.
+* **State Resetting:** Milestone 2's verification tests must explicitly handle or reset leftover artifacts generated during Milestone 1.
 
-### CLI Workflow
-\`\`\`bash
-# 1. Initialize a new task scaffold
-stb init my-task-name -p <project_id> -t milestone
+### 10.2 Long-Context Task Design (>50k Tokens)
+For tasks evaluating an agent's ability to reason over massive corpora:
+* **Semantic Distractors:** Include irrelevant documents, outdated specs, or noisy logs to challenge retrieval models.
+* **Conflicting Information:** Introduce contradictory details in different files, requiring chronological reconstruction.
+* **Synthesis Chains:** Ensure clues are scattered across multiple sources so that simple keyword matches fail, forcing multi-document analysis.
 
-# 2. Launch your container interactively to build it
-stb harbor tasks start-env -p ./my-task-name -i
+---
 
-# 3. Run your Oracle to prove it is solvable
-stb harbor run -a oracle -p ./my-task-name
-\`\`\`
+## 11. Local Development and Debugging Loop
 
-### Creating the ZIP for Submission
-When you are ready to submit, do **NOT** zip the parent folder. Open your task folder, select all the files (`task.toml`, `steps/`, etc.), and compress those directly into a ZIP file. 
+Contributors must validate tasks locally before submitting them to the Snorkel platform.
 
-Upload the ZIP to the platform, verify your rubric, and hit **Submit**!
+```text
++-------------------+      +-------------------+      +-------------------+      +-------------------+
+|  Initialize Task  | ---> | Build Docker Env  | ---> |   Run Oracle L1   | ---> |  Verify Test Run  |
+| (stb projects/init)|      |  (start-env -i)   |      |  (stb harbor run) |      | (pytest execution)|
++-------------------+      +-------------------+      +-------------------+      +-------------------+
+                                                                                               |
+                                                                                               v
++-------------------+      +-------------------+      +-------------------+      +-------------------+
+| Platform Submission| <--- | Real Agent Eval   | <--- | Run LLMaJ Checks  | <--- | Exploit & Hardening|
+| (Create ZIP file) |      |  (GPT-5.5/Claude) |      | (stb tasks check) |      | (Verify security) |
++-------------------+      +-------------------+      +-------------------+      +-------------------+
+```
+
+### 11.1 Standard CLI Tool commands
+
+1. **Prerequisites & Setup:**
+   ```bash
+   # Install uv package manager
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   # Install Snorkel CLI
+   uv tool install stb-cli
+   # Authenticate with the Snorkel Expert Platform
+   stb auth login
+   # Set provider API keys
+   stb keys set anthropic
+   stb keys set openai
+   ```
+2. **Scaffolding and Starting:**
+   ```bash
+   # List active project IDs
+   stb projects list
+   # Initialize a Milestone task scaffold
+   stb init my-task-name -p <project_id> -t milestone
+   # Launch container for interactive debugging
+   stb harbor tasks start-env -p ./my-task-name -i
+   ```
+3. **Validating & Evaluating:**
+   ```bash
+   # Run the local Oracle Agent to prove human solvability (Runs solve.sh 3x)
+   stb harbor run -a oracle -p ./my-task-name
+   # Execute Static CI and LLMaJ checks locally
+   stb harbor tasks check ./my-task-name -m openai/@openai/gpt-5.5
+   # Test against real frontier models for pass rate calibration
+   stb harbor run -m @openai/gpt-5.5 -p ./my-task-name
+   stb harbor run -m @anthropic/claude-opus-4.8 -p ./my-task-name
+   ```
+
+---
+
+## 12. Submission & Platform Iteration Workflow
+
+### 12.1 Packaging the Task (The ZIP "Gotcha")
+* **Rule:** Do **NOT** zip the task folder itself. Open the task directory, select all the files inside (e.g., `task.toml`, `environment/`, `steps/`), and compress the files directly. 
+* *Why:* Zipping the parent folder nests the files, causing the platform CI to fail because it cannot find `task.toml` at the root of the archive.
+
+### 12.2 Platform Steps
+1. **Initial Upload:** Upload the ZIP to the Snorkel Expert Platform. Check **"Generate Rubric"**, but uncheck **"Send to reviewer"**.
+2. **Review Feedback:** Check your email for CI and LLMaJ feedback, click **"Revise"** on the platform, and inspect failing checks.
+3. **Rubric Customization:** Edit the synthetic rubric generated by the platform.
+   * Allocate **10–40 points** per milestone.
+   * Set at least **three negative reward criteria** (e.g., `-1` or `-10` points) to penalize cheating or constraint bypass.
+4. **Final Submission:** Once CI is 100% green and the rubric matches perfectly, click **"Revise"**, check **"Send to Reviewer"**, and submit for human peer review.
+
+---
+
+## 13. Reviewer Rubric, Scoring, and Rejections
+
+Submissions are evaluated across six core dimensions:
+
+### 13.1 Scoring Matrix Weights
+
+| Evaluation Category | Weight | Focus Areas |
+| :--- | :--- | :--- |
+| **Realism** | 20% | Authenticity of the scenario; resembles real production issues. |
+| **Determinism** | 20% | Execution consistency; reproducible verifiers with zero flakiness. |
+| **Difficulty Quality** | 20% | Calibrated challenge; frontier AI models fail meaningfully. |
+| **Exploit Resistance** | 15% | Robustness against shortcutting, reward spoofing, and test-bypassing. |
+| **Environment Stability**| 10% | Clean, fast Docker builds with exact version pinning. |
+| **Verifier Quality** | 10% | Behavior-focused assertions with complete docstrings. |
+| **Instruction Quality** | 5% | Clean Slack-like prompts with no answer leakage or hints. |
+
+* **Acceptance Thresholds:** `90–100` points (Strong Acceptance Candidate); `75–89` (Revision Required); `60–74` (Major Revision Required); `<60` (Rejection).
+
+### 13.2 Severity Levels for Issues
+* **Critical:** Immediate task rejection (e.g., broken environment, major security holes, trivial pass rate).
+* **Major:** Requires formal revisions and a new upload before review continues.
+* **Minor:** Improvement recommended but not strictly blocking.
+* **Informational:** Observations or tips provided by the reviewer.
+
+---
+
+## 14. Task Design Archetypes & AI Failure Modes
+
+### 14.1 Recommended Design Archetypes
+
+1. **Dependency Drift Debugging:** A library update introduces subtle, unlogged API incompatibilities or transitive library conflicts. Agents struggle by trying to patch symptoms instead of fixing version drift.
+2. **Race Condition Diagnosis:** Intermittent concurrency failures involving parallel execution, multiprocessing deadlocks, or async queue races.
+3. **Stateful Migration Failures:** Database schema changes or upgrades that partially execute and corrupt state across system boundaries.
+4. **Multi-Service Orchestration Bugs:** Misrouting in gateways, cache synchronization errors, or auth token propagation leaks between coupled services.
+5. **Silent Data Corruption:** System remains healthy (no crash) but writes corrupted, incorrectly encoded, or float-drifted data to files.
+6. **Broken CI/CD Infrastructure:** Path resolution issues, missing OS build dependencies, or test-order instabilities in a pipeline.
+7. **Legacy Compatibility Regressions:** Runtime updates that break backwards-compatible configuration patterns.
+8. **Observability & Logging Misconfigurations:** Masked telemetry, incorrect log levels, or broken tracers, forcing the agent to rely on logs to locate bugs.
+9. **Incremental Debugging Chains:** Multi-step issues where patching the first bug exposes a secondary, deeper failure.
+
+### 14.2 Known Frontier-Agent Failure Modes
+Design your tasks around these common AI blind spots:
+* **Premature Assumptions:** Agents jump to conclusions based on the first error trace, applying hasty patches without thorough root-cause analysis.
+* **Local Fixes Breaking Global Behavior:** Agents patch a local test while breaking downstream functions.
+* **Overfitting to Visible Tests:** Agents write logic that satisfies pytest assertions without actually fixing the system's logic.
+* **Dependency Hallucinations:** Agents invent nonexistent APIs or suggest invalid library packages.
+* **Weak State Tracking:** Failure to maintain execution context across complex debugging chains.
+
+---
+
+## 15. Operational Resource Limits & Governance
+
+To maintain evaluation scalability, tasks must operate within bounded limits:
+
+* **CPUs:** 1–4 Cores
+* **Memory Limit:** 2–8 GB
+* **Storage Limit:** 5–20 GB
+* **Agent Execution Timeout:** 10–30 Minutes
+* **Verifier Execution Timeout:** 2–10 Minutes
+
+*Note on Out-of-Memory (OOM):* Always test memory-intensive operations (like large-context documents parser runs) locally. If containers crash due to OOM, it usually indicates oversized corpora, memory leaks in the verifier, or unbounded process assumptions.
+
+---
+
+## 16. Troubleshooting Common Task Failures
+
+| Observed Problem | Likely Root Cause | Corrective Action / Fix |
+| :--- | :--- | :--- |
+| `reward.txt` is missing | Verifier crashed or directory paths do not exist | Verify `/logs/verifier/` exists and check `test.sh` logic. |
+| AI passes the task instantly | Task is too easy or contains an obvious stack trace | Increase task complexity, obscure file names, or add multi-step state. |
+| Docker build fails | Floating tags or broken upstream mirror | Pin dependency versions and base images exactly. |
+| Local CI fails | `task.toml` has invalid schema | Run schema validation; verify `environment.os` is a plain string. |
+| Pytest execution times out | Infinite loop in verifier or inefficient lookup loops | Optimize test assertions and implement execution caps. |
+
+---
+
+## 17. VS Code Extensions for Productive Authoring
+
+While optional, the following extensions are recommended for the best development experience:
+* **Docker Extension:** For direct container management and runtime terminal access.
+* **Python Extension:** Enables linting, pytest debugging, and dynamic code checking.
+* **Markdown Support:** Simplifies formatting and editing for `instruction.md` files.
+* **TOML Extension:** Validates task configurations in `task.toml` to prevent syntax bugs.
+* **GitLens:** Helps track local revisions and git state during complex debugging chains.
+
+---
+
+## 18. Complete Submission Readiness Checklist
+
+Ensure all criteria are met before uploading your task to the Snorkel platform:
+
+### Docker & Environment
+- [ ] Docker image builds completely without errors.
+- [ ] All dependencies are pinned with exact versions.
+- [ ] Network internet access is disabled (`allow_internet = false`).
+- [ ] Privileged mode and host mounts are omitted.
+- [ ] Base image uses a canonical registry with `@sha256` digest pinning.
+- [ ] `tmux` and `asciinema` are installed inside the Docker image.
+
+### Instructions (`instruction.md`)
+- [ ] Hand-written, natural Slack/Jira-style tone.
+- [ ] Concise with no implementation hints or code snippets.
+- [ ] Every directory reference uses absolute filesystem paths.
+
+### Oracle Solution (`solve.sh`)
+- [ ] Deterministic, reliable, and runs successfully in a clean container.
+- [ ] Solves the task dynamically without hardcoding values.
+
+### Tests & Verification
+- [ ] Tests are deterministic and do not depend on sleep timeouts.
+- [ ] Verifier writes a clean `1.0` or `0.0` output directly to `/logs/verifier/reward.txt`.
+- [ ] Pytest test cases are behavior-focused and contain complete docstrings.
+- [ ] `test.sh` does **not** have `exit 0` or `exit $?` at the end.
+
+### Calibration & Submission
+- [ ] Tested against frontier models (Claude/GPT-5) with pass rates within guidelines.
+- [ ] The generated task rubric has been customized with negative reward constraints.
+- [ ] ZIP archive contains task files compressed directly (no parent folder).
+- [ ] Task files and logic are treated as strictly confidential and not posted online.
