@@ -9,7 +9,19 @@ const phases = [
     icon: <Settings />,
     description: "Let's get your local environment ready right now so you can follow along with the code later.",
     action: "Your local terminal",
-    focus: "Install the uv package manager and stb-cli. Run `stb auth login` to connect to the platform. You will need this setup for Phase 4."
+    focus: "Run these commands in your local terminal (Mac/Linux/WSL) to install the uv package manager, install the Snorkel CLI, and authenticate your machine.",
+    codeSnippet: `# 1. Install uv package manager
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install Snorkel CLI
+uv tool install stb-cli
+
+# 3. Authenticate with the Snorkel Expert Platform
+stb auth login
+
+# 4. (Optional) Set your API keys for local testing
+stb keys set anthropic
+stb keys set openai`
   },
   {
     id: 1,
@@ -95,6 +107,18 @@ export default function Dashboard() {
                 <strong style={{color: 'var(--accent)'}}>What to focus on:</strong>
                 <p style={{fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem'}}>{phase.focus}</p>
               </div>
+
+              {phase.codeSnippet && (
+                <div className="code-block-wrapper" style={{marginTop: '1.5rem', boxShadow: 'none'}}>
+                  <div className="code-block-header">
+                    <Terminal size={14} />
+                    <span>Terminal</span>
+                  </div>
+                  <pre style={{margin: 0, padding: '1rem', background: 'transparent', color: '#e2e8f0', overflowX: 'auto'}}>
+                    <code>{phase.codeSnippet}</code>
+                  </pre>
+                </div>
+              )}
 
               <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap'}}>
                 {phase.link && (
