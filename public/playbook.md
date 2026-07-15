@@ -29,7 +29,7 @@ Project Terminus evaluates frontier AI coding agents (Claude, GPT-5) on practica
 
 Milestone tasks group instructions, solutions, and verifiers into sequential steps. This is the required layout for multi-step tasks:
 
-\`\`\`text
+```text
 my-task-name/
 ├── task.toml              # Task configuration
 ├── environment/
@@ -44,7 +44,7 @@ my-task-name/
     │       └── test_m1.py # Pytest verifier for Step 1
     └── milestone_2/
         ...
-\`\`\`
+```
 
 ---
 
@@ -61,7 +61,7 @@ The `task.toml` file provides settings read by Harbor to control the runtime con
 * `environment.workdir`: Default active container directory (e.g., "/app").
 
 **Default Template:**
-\`\`\`toml
+```toml
 [metadata]
 name = "my-task-name"
 difficulty = "hard"
@@ -83,7 +83,7 @@ workdir = "/app"
 [scoring]
 points_total = 100
 allow_partial_credit = true
-\`\`\`
+```
 
 ---
 
@@ -124,7 +124,7 @@ The verifier executes tests to evaluate the agent's work. It must test observabl
 Do **NOT** append `exit 0` or `exit $?` at the very end of `test.sh`. The final block must be the `if/else` wrapper writing to `/logs/verifier/reward.txt`.
 
 **Gold Standard test.sh:**
-\`\`\`bash
+```bash
 #!/bin/bash
 set -e
 cd /app
@@ -137,7 +137,7 @@ else
     echo "0.0" > /logs/verifier/reward.txt
 fi
 # WARNING: Do NOT put exit $? or exit 0 below this line!
-\`\`\`
+```
 
 ---
 
@@ -153,7 +153,7 @@ A task is invalid if an agent can bypass the intended engineering work to score 
 ## 10. Local Debugging & Submission
 
 **Standard CLI Commands:**
-\`\`\`bash
+```bash
 # 1. Initialize a Milestone task scaffold
 stb init my-task-name -p <project_id> -t milestone
 
@@ -162,7 +162,7 @@ stb harbor tasks start-env -p ./my-task-name -i
 
 # 3. Run the Oracle locally to prove human solvability
 stb harbor run -a oracle -p ./my-task-name
-\`\`\`
+```
 
 **The ZIP Gotcha:**
 When packaging your task for submission, do **NOT** zip the parent task folder itself. Open the task directory, select all the files inside (`task.toml`, `environment/`, `steps/`), and compress the files directly.
@@ -172,3 +172,4 @@ When packaging your task for submission, do **NOT** zip the parent task folder i
 * `75–89`: Revision Required
 * `<74`: Major Revision / Rejection
 *(Scoring is weighted heavily on Realism, Determinism, Difficulty Calibration, and Exploit Resistance).*
+
