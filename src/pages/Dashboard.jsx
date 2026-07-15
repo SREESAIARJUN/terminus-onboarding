@@ -10,7 +10,11 @@ const phases = [
     description: "Before touching any code or watching the videos, you need to understand the 'Laws of Physics' of this platform.",
     action: "Read The Comprehensive Technical Playbook & SOP",
     focus: "Read this cover-to-cover. Pay special attention to the '5 Pillars of a Task', the 'Top 5 Gotchas' (like the test.sh exit code rule), and the LLM failure modes.",
-    link: "/playbook"
+    link: "/playbook",
+    externalLink: {
+      url: "https://snorkel-ai.github.io/Terminus-EC-Training-stateful/portal/docs/getting-started/welcome",
+      label: "Official Snorkel Getting Started Docs"
+    }
   },
   {
     id: 2,
@@ -83,11 +87,19 @@ export default function Dashboard() {
                 <p style={{fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem'}}>{phase.focus}</p>
               </div>
 
-              {phase.link && (
-                <Link to={phase.link} className="btn btn-primary" style={{marginTop: '1.5rem'}}>
-                  Read The Master Guide
-                </Link>
-              )}
+              <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap'}}>
+                {phase.link && (
+                  <Link to={phase.link} className="btn btn-primary">
+                    Read The Master Guide
+                  </Link>
+                )}
+                
+                {phase.externalLink && (
+                  <a href={phase.externalLink.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                    {phase.externalLink.label}
+                  </a>
+                )}
+              </div>
 
               {phase.videos && (
                 <div className="video-grid">
