@@ -4,10 +4,25 @@ import { Link } from 'react-router-dom'
 const phases = [
   {
     id: 1,
-    title: "Phase 1: The Core Foundation",
+    title: "Phase 1: The Visual Walkthrough",
+    time: "~1 Hour",
+    icon: <Video />,
+    description: "Before diving into the technical playbook, watch these videos to see how the rules map to the actual interface and workflow.",
+    action: "Watch the Onboarding Videos below",
+    focus: "Treat this as a guided tour. Focus on the visual elements: how the Snorkel Expert Platform UI looks, how the Web IDE operates, and how the instructor uses the stb CLI in real-time.",
+    videos: [
+      { name: "Project Introduction", id: "1Xpg6qpetWh9m-40UhU8bfEGzW-vDy-rg" },
+      { name: "CLI Guide", id: "1HwxIpTAbxnGELSfUGKtfBoPAFKFTOJSn" },
+      { name: "Task Structure Guidelines", id: "10UGHLzJAC8YDBD4NOqkwyYgM5z0MBaNo" },
+      { name: "Task Creation Guide", id: "1Ufeyy4Tl7CM9wIFN9Sc5sxvE2vIuDAwT" }
+    ]
+  },
+  {
+    id: 2,
+    title: "Phase 2: The Core Foundation",
     time: "45 Minutes",
     icon: <BookOpen />,
-    description: "Before touching any code or watching the videos, you need to understand the 'Laws of Physics' of this platform.",
+    description: "Now that you have the visual context, you need to understand the 'Laws of Physics' of this platform.",
     action: "Read The Comprehensive Technical Playbook & SOP",
     focus: "Read this cover-to-cover. Pay special attention to the '5 Pillars of a Task', the 'Top 5 Gotchas' (like the test.sh exit code rule), and the LLM failure modes.",
     link: "/playbook",
@@ -15,21 +30,6 @@ const phases = [
       url: "https://snorkel-ai.github.io/Terminus-EC-Training-stateful/portal/docs/getting-started/welcome",
       label: "Official Snorkel Getting Started Docs"
     }
-  },
-  {
-    id: 2,
-    title: "Phase 2: The Visual Walkthrough",
-    time: "~1 Hour",
-    icon: <Video />,
-    description: "Now that you know the rules, see how they map to the actual interface and workflow.",
-    action: "Watch the Onboarding Videos below",
-    focus: "Treat this as a guided tour. You already know the theory from Phase 1, so focus on the visual elements: how the Snorkel Expert Platform UI looks, how the Web IDE operates, and how the instructor uses the stb CLI in real-time.",
-    videos: [
-      { name: "Project Introduction", id: "1Xpg6qpetWh9m-40UhU8bfEGzW-vDy-rg" },
-      { name: "CLI Guide", id: "1HwxIpTAbxnGELSfUGKtfBoPAFKFTOJSn" },
-      { name: "Task Structure Guidelines", id: "10UGHLzJAC8YDBD4NOqkwyYgM5z0MBaNo" },
-      { name: "Task Creation Guide", id: "1Ufeyy4Tl7CM9wIFN9Sc5sxvE2vIuDAwT" }
-    ]
   },
   {
     id: 3,
