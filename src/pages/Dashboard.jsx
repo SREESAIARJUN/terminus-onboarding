@@ -1,7 +1,16 @@
-import { BookOpen, Video, Code, Terminal, Clock, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Video, Code, Terminal, Clock, CheckCircle2, Settings, ClipboardList } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const phases = [
+  {
+    id: 0,
+    title: "Phase 0: Tooling Setup",
+    time: "10 Minutes",
+    icon: <Settings />,
+    description: "Let's get your local environment ready right now so you can follow along with the code later.",
+    action: "Your local terminal",
+    focus: "Install the uv package manager and stb-cli. Run `stb auth login` to connect to the platform. You will need this setup for Phase 4."
+  },
   {
     id: 1,
     title: "Phase 1: The Visual Walkthrough",
@@ -24,7 +33,7 @@ const phases = [
     icon: <BookOpen />,
     description: "Now that you have the visual context, you need to understand the 'Laws of Physics' of this platform.",
     action: "Read The Comprehensive Technical Playbook & SOP",
-    focus: "Read this cover-to-cover. Pay special attention to the '5 Pillars of a Task', the 'Top 5 Gotchas' (like the test.sh exit code rule), and the LLM failure modes.",
+    focus: "Read this cover-to-cover. Pay special attention to the '5 Pillars of a Task' and the LLM failure modes. 💡 PRO TIP: Have the Sample Tasks open in VS Code while reading this guide so you can cross-reference the rules with actual code.",
     link: "/playbook",
     externalLink: {
       url: "https://snorkel-ai.github.io/Terminus-EC-Training-stateful/portal/docs/getting-started/welcome",
@@ -42,12 +51,12 @@ const phases = [
   },
   {
     id: 4,
-    title: "Phase 4: Environment Setup & Sandbox Practice",
-    time: "1 Hour",
+    title: "Phase 4: Sandbox Practice",
+    time: "45 Minutes",
     icon: <Terminal />,
     description: "Time to get your hands dirty and validate your local environment.",
     action: "Your local terminal & Docker Desktop",
-    focus: "Install uv and stb-cli. Authenticate your CLI. Initialize a dummy task. Run the Oracle locally."
+    focus: "Initialize a dummy task (`stb init`). Run the container interactively, and execute the Oracle locally to ensure everything runs smoothly."
   }
 ]
 
@@ -131,6 +140,14 @@ export default function Dashboard() {
         <p style={{color: 'var(--text-muted)', maxWidth: '600px', margin: '1rem auto'}}>
           By the end of this onboarding, you should confidently build a deterministic Docker environment, write a bulletproof verifier, and know how to avoid CI rejections.
         </p>
+        
+        <div style={{display: 'flex', justifyContent: 'center', gap: '1rem', margin: '2rem 0'}}>
+          <Link to="/playbook" className="btn btn-secondary" style={{borderColor: 'var(--accent)', color: 'var(--text-main)'}}>
+            <ClipboardList size={20} color="var(--accent)" />
+            View Pre-Flight Checklist
+          </Link>
+        </div>
+
         <p><strong>Once completed, drop a message in the channel for your first assignment!</strong></p>
       </div>
     </div>
