@@ -29,9 +29,11 @@ export default function Playbook() {
     h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
     h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
     h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
-    code: ({node, inline, className, children, ...props}) => {
+    pre: ({children}) => <>{children}</>,
+    code: ({node, className, children, ...props}) => {
       const match = /language-(\w+)/.exec(className || '');
-      return !inline ? (
+      const isBlock = match || String(children).includes('\n');
+      return isBlock ? (
         <div className="code-block-wrapper">
           <div className="code-block-header">
             <FileText size={14} />
